@@ -1,0 +1,1 @@
+../../pythonMin/aux/auxGeneratingModules.py
