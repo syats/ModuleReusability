@@ -6,4 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
+# Saved progess
+*.npz
+*.dws
+
+
 

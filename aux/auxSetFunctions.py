@@ -1,1 +1,1 @@
-../../pythonMin/aux/auxSetFunctions.py
+../../python/aux/auxSetFunctions.py

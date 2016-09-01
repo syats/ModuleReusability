@@ -1,1 +1,1 @@
-../../pythonMin/gradDescent/measuresForDecomposableMatrix.py
+../../python/gradDescent/measuresForDecomposableMatrix.py

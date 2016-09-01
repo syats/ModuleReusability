@@ -1,1 +1,1 @@
-../../pythonMin/gradDescent/listOfDecompositions.py
+../../python/gradDescent/listOfDecompositions.py

@@ -1,1 +1,1 @@
-../../pythonMin/aux/auxGeneratingModules.py
+../../python/aux/auxGeneratingModules.py

@@ -1,1 +1,1 @@
-../../pythonMin/gradDescent/utilsDecomposableMatrix.py
+../../python/gradDescent/utilsDecomposableMatrix.py

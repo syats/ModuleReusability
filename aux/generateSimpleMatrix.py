@@ -1,1 +1,1 @@
-../../pythonMin/aux/generateSimpleMatrix.py
+../../python/aux/generateSimpleMatrix.py

@@ -1,1 +1,1 @@
-../../pythonMin/aux/decompositionWithSurrogates.py
+../../python/aux/decompositionWithSurrogates.py

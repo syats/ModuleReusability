@@ -1,1 +1,1 @@
-../../pythonMin/gradDescent/auxForMultiCore.py
+../../python/gradDescent/auxForMultiCore.py

@@ -1,1 +1,1 @@
-../../pythonMin/aux/auxFunctionsGEO.py
+../../python/aux/auxFunctionsGEO.py

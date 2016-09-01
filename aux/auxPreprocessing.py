@@ -1,1 +1,1 @@
-../../pythonMin/aux/auxPreprocessing.py
+../../python/aux/auxPreprocessing.py

@@ -1,1 +1,1 @@
-../../pythonMin/gradDescent/extendFromRtoM.py
+../../python/gradDescent/extendFromRtoM.py

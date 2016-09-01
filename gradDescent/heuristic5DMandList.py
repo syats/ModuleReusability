@@ -1,1 +1,1 @@
-../../pythonMin/gradDescent/heuristic5DMandList.py
+../../python/gradDescent/heuristic5DMandList.py
