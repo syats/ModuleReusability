@@ -53,8 +53,8 @@ titles = ['Mean size \nAUC ratio ','Max size \nAUC ratio','entropy of reusabilit
 # L is the number of k decomp to save for the next iteration (only the best, the rest are discarded)
 # W + L is how many k's are the L*(D+Q) decompositions propagated greedily before discarding any of them
 
-heuristicParms={'Q':2 , 'L':4 , 'W': 2, 'R':-1 , 'D':6}
-heuristicParms={'Q':1 , 'L':1 , 'W': 1, 'R':-1 , 'D':2}
+heuristicParms={'Q':2 , 'L':4 , 'W': 2, 'R':-1 , 'D':6}  # Slower for rean analysis 
+heuristicParms={'Q':1 , 'L':1 , 'W': 1, 'R':-1 , 'D':2}  # Fast for testing
 nc = 4; 			 # Number of cores to run the heuristic algorithm on
 # ---------------------------------------
 
