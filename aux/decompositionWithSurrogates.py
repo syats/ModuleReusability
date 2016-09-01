@@ -106,10 +106,10 @@ def flattenSizeReuseList(allData,origCs,sizeOrReuse,MeanMaxOrEnt):
 
 
 			nans = np.nonzero(np.isnan(newDataSet)==True)[0];
-			lasNonNan = nans[0]-1;
-			if lasNonNan < smallestNan:
-				#print("NANupdate")
-				smallestNan = lasNonNan
+			if len(nans)>0:
+				lasNonNan = nans[0]-1;
+				if lasNonNan < smallestNan:					
+					smallestNan = lasNonNan
 			compactAllData[ke].append(newDataSet)
 
 		for dnum in range(len(compactAllData[ke])):
@@ -165,7 +165,7 @@ def loadOrCompute(fn,C,storageDir,
 
 	else:
 		toStore = decompositionWithSurrogates(fn);
-		print("COMPUTING: "+fn)
+		print("Computing Real ...stand by.")
 		allSizesMeasuresForThisK,m,r = pam.decomposeMatrixAndGetSumOfVariances(C,nCores=nc,heuristicParameters=heuristicParms,returnlistOfsizeMeasures=True,saveDir=saveDir,savePrefix=savePrefix);
 		curvesToStore = []
 		#allSizesMeasuresForThisK = [sdata for sdata in allSizesMeasuresForThisK if len(sdata) > 0]
@@ -196,6 +196,7 @@ def loadOrCompute(fn,C,storageDir,
 
 	for rn in range(thisNumRand):
 		CR = pam.createRANDEquivalent(C)
+		print("Computing DPRand "+str(rn+1)+" / "+str(thisNumRand)+" ...stand by.")
 		allSizesMeasuresForThisK,m,r = pam.decomposeMatrixAndGetSumOfVariances(CR,nCores=nc,heuristicParameters=heuristicParms,returnlistOfsizeMeasures=True);
 		curvesToStore = []
 		#allSizesMeasuresForThisK = [sdata for sdata in allSizesMeasuresForThisK if len(sdata) > 0]
@@ -209,10 +210,11 @@ def loadOrCompute(fn,C,storageDir,
 		toStore.addC(CR,'RAND',curvesToStore,functionsToCompute)
 		dataThisFn.append(curvesToStore[0])
 		typesThisFn.append(1);
-		print('RAND')
+
 
 	for rn in range(thisNumRSS3):
 		CR = pam.createRSS3Equivalent(C)
+		print("Computing RSS-Rand "+str(rn+1)+" / "+str(thisNumRSS3)+" ...stand by.")
 		allSizesMeasuresForThisK,m,r = pam.decomposeMatrixAndGetSumOfVariances(CR,nCores=nc,heuristicParameters=heuristicParms,returnlistOfsizeMeasures=True);
 		curvesToStore = []
 		#allSizesMeasuresForThisK = [sdata for sdata in allSizesMeasuresForThisK if len(sdata) > 0]
@@ -226,8 +228,8 @@ def loadOrCompute(fn,C,storageDir,
 		toStore.addC(CR,'RSS3',curvesToStore,functionsToCompute)
 		dataThisFn.append(curvesToStore[0])
 		typesThisFn.append(2);
-		print('RSS')
 
+	print("Real data and random equivalents ready")
 	if thisNumRSS3 + thisNumRand > 0:
 		toStore.saveToFile(storageDir)
 

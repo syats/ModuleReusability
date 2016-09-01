@@ -34,7 +34,7 @@ numRSS3 = 2; 		 # Numbre of RSS-Rand to compare to
 
 storageDir = 'storage/';
 #The computations are saved here, not the decompositions themselves but only the data necesary for recomputing the plots. The filenames are a hash of the input matrix, and the files contain pickled objects of class decompositionWithSurrogates. If something changes and you want to rerun everything for a given input file, you must delete the corresponding file in the storageDir
-toSaveDirs = ['decompositions/',None]
+toSaveDirs = ['decompositions/',None,None]
 #One can also save the decompositions of the real data... beware it can take up lots of space
 
 # ---------------------------------------

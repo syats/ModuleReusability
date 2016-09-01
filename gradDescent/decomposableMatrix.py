@@ -51,7 +51,7 @@ class decomposableMatrix:
 		self.m = self.theMatrix.shape[0];
 		self.k = self.theMatrix.shape[1];
 		self.alsoSmaller = False;
-		self.C = cMatrix;
+		self.C = None;
 		self.intersectionReuseMatrix = None;
 		if self.C != None:
 			if self.C.shape[0] < self.C.shape[1]:
@@ -497,10 +497,10 @@ class decomposableMatrix:
 				print("~~~~~")
 			'''
 
+			if min(self.theMatrix.shape)==self.norm0():
+				return result
 			j1,j2,left = self.findQthOverlap(q);
 			stat = self.overlapToNewColumn(j1,j2)
-			if stat == 0:
-				return result
 			lsc = self.removeContainedColumns();
 			result.append(tuple([self.copy(),left]))
 

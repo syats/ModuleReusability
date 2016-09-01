@@ -176,7 +176,7 @@ def makeViolinPlots(dataForViolinO,theAx,ytitle):
 
 	positions = [[0.7*i-0.02,0.7*i+0.02] for i in range(1,numFns+1)];
 	positions = [item for sublist in positions for item in sublist]
-	ax.plot([positions[0]-0.87,positions[-1]+0.35],[1,1],'r:',alpha=0.7,zorder=-1)
+	ax.plot([positions[0]-0.35,positions[-1]+0.35],[1,1],'r:',alpha=0.7,zorder=-1)
 
 
 	violin_parts = ax.violinplot(allData,showmeans=True,positions=positions,showextrema=False)

@@ -189,7 +189,9 @@ class listOfDecompositions:
 			sofar = len([x for x in prop if x.k == k+1]);
 
 		#If after removing repeated we are missing some, we add some random propagations
-		while ( ((L-sofar) > 0)  and (len(mats) > 0) ):
+		attemps = 10*(L+Q+D)
+		while ( ((L-sofar) > 0)  and (len(mats) > 0) ) and (attemps > 0):
+			attemps -= 1;
 			toProp = [tuple([ran.choice(mats),ran.choice(range(1,2*k))]) for d in range(L-sofar+1)]
 			propTriplets = self.mapPropagations(toProp)
 			prop2 = [t[0] for t in propTriplets if (t[0].k >= k+1) and (t[0].norm() < t[3].norm())];

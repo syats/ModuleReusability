@@ -71,19 +71,34 @@ def heuristic1(Q,l,w,r,D,outputDataPathO,outputDataPrefixO,n,m,C,realData = 0,nu
 	if (restartFromSeed>0) or (seedFromFile):
 		L.seed(outputDataPath,outputDataPrefix,C,restartFromSeed)
 	counter = 0;
+	counter2 = -10
+	latestK = -1;
 	while (L.smallestNonEmpty() <= m) or (L.bestNorms[m] > m):
 
 		K = L.smallestNonEmpty()
 
-		#print(str(K)+" "+str(len(L.theList[K]))),
+		#print(str(K)+" "+str(L.theList[K][0].theMatrix.shape))
 
-		if (counter >= l):
+		if (counter >= l) or len(L.theList[K]) == 0:
 			break;
 
-		if ((K==m) and (L.bestNorms[m]==m)):
+		if (L.bestNorms[m]==m) and (K==m):
 			counter += 1;
-		if len(L.theList[K]) == 0:
-			break
+
+
+		'''
+		if (latestK == K):
+			counter2+=1
+		else:
+			counter2 = 0;
+		latestK = K;
+
+		if (counter2  >= 2*l and L.bestNorms[K] < np.inf) or (L.bestNorms[K] < L.theList[K][0].norm0):
+			L.theList[K] = [];
+			L.ocupations = 0;
+			counter2 = 0;
+			continue
+		'''
 
 
 		oldBs = [];
@@ -92,20 +107,19 @@ def heuristic1(Q,l,w,r,D,outputDataPathO,outputDataPrefixO,n,m,C,realData = 0,nu
 		if removeSuperflousFromB:
 			newBs = []
 			for bkWS in L.theList[K]:
-				if supTaken > 1:
+				if supTaken >= 1:
 					break
 				bkWSC = bkWS.copy();
 				newBk = bkWSC.removeSuperflousIncreasingReuse(CC)
 				if newBk != None:
 					newBs.append(newBk)
-					#print("\n added "+str(newBk.weightVector.sum()))
+					#print("added "+str(newBk.weightVector.sum()))
 					supTaken+=1;
 					if newBk.k == K:
 						oldBs.append(bkWSC)
 			L.addMatrices(newBs)
 
 
-		#print(" -> "+str(len(L.theList[K]))+ " coi: "+str(L.theList[K][0].theCoincidM.sum())+" sha"+str(L.theList[K][0].theMatrix.shape)+" nor"+str(L.theList[K][0].norm()))
 		toPropagate  =  L.theList[K];
 		L.bestNorms[K] = L.theList[K][0].norm0();
 
@@ -138,13 +152,12 @@ def heuristic1(Q,l,w,r,D,outputDataPathO,outputDataPrefixO,n,m,C,realData = 0,nu
 		lim2 = min( [ lim1  + Ll+ran.choice(range(Q))  , R+1 , len(L.theList) ] )
 		lim3 = min( [ lim2  + Ww , R+1 , len(L.theList) ] )
 
-
 		range1 = range(K+1,lim1)
 		range2 = range(lim1,lim2)
 		range3 = range(lim2,lim3)
 
-		#print(" ::1:-> "),
 		for k2 in range1:
+			#print("r1 "),
 			dd = 0;
 			if (ran.random() < 0.10):
 				dd = 1;
@@ -168,7 +181,10 @@ def heuristic1(Q,l,w,r,D,outputDataPathO,outputDataPrefixO,n,m,C,realData = 0,nu
 				L.theList[k2] = good
 			L.ocupations[k2] = len(L.theList[k2]);
 			propagated    = L.propagateOneStep(toPropagate,1,dd,len(toPropagate)+dd*l);
-
+			if len(propagated)==0:
+				range3 = [];
+				range2 = [];
+				break
 			L.addMatrices(propagated)
 			if (len(L.theList[k2]) > 0):
 				L.bestNorms[k2] = L.theList[k2][0].norm0();
@@ -181,15 +197,14 @@ def heuristic1(Q,l,w,r,D,outputDataPathO,outputDataPrefixO,n,m,C,realData = 0,nu
 		if (len(toPropagate) < l) and (len(propagated)>0):
 			missing = l - len(toPropagate);
 			toPropagate.extend([ran.choice(propagated[:l]) for kc in range(missing)  ])
-		#print("  :2 ( "+str(len(L.theList[range2[0]]))+" )->"),
+
 		for k2 in range2:
+			#print("r2 "),
 			dd = 0;
 			if (ran.random() < 0.075):
 				dd = 1;
 
 			#we leave l and propagate the rest
-			#toPropagate   = L.theList[k2][l:2*l];
-			#print(str(k2)+"("+str(len(toPropagate))+") "),
 			ll = l-supTaken;
 			if ll < 2:
 				ll = 2;
@@ -202,8 +217,11 @@ def heuristic1(Q,l,w,r,D,outputDataPathO,outputDataPrefixO,n,m,C,realData = 0,nu
 				L.theList[k2] = good
 			L.ocupations[k2] = len(L.theList[k2]);
 			propagated    = L.propagateOneStep(toPropagate,1,dd,len(toPropagate)+dd);
+			if len(propagated)==0:
+				range3 = [];
+				break
 			L.addMatrices(propagated)
-			if (k2 > n+numGreedy+dd+1) and (k2-K)>4:
+			if (k2 > n+numGreedy+dd+1) and (k2-K)>4 and (k2 % 3)==0:
 				L.trim(k2-1)
 
 			toPropagate = propagated;
@@ -213,59 +231,43 @@ def heuristic1(Q,l,w,r,D,outputDataPathO,outputDataPrefixO,n,m,C,realData = 0,nu
 			continue;
 
 
-		#print("  :3 ( "+str(len(L.theList[range3[0]]))+" )->"),
 		for k2 in range3:
 			dd = 0;
-			if (ran.random() < 0.07):
+			if (ran.random() < 0.1):
 				dd = 1;
-			#print(str(k2)+"("+str(len(toPropagate))+") "),
 			propagated = L.propagateOneStep(toPropagate,1,dd,numCores+dd,alsoBad=(k2-lim2 <= Q+dd))
-			#print("("+str(len(toPropagate))+") "),
 			if len(propagated)==0:
 				break
-			si = propagated[0].k
 
-			#print(propagated)
-			L.theList[si].extend(propagated);
-			#L.addMatrices(propagated)
-			L.ocupations[si] = len(L.theList[si])
-			if (k2 > n+numGreedy+1+dd):
+			for pok in propagated:
+				si = pok.k
+				L.theList[si].append(pok);
+				L.ocupations[si] = len(L.theList[si])
+
+			if (k2 > n+numGreedy+1+dd) and (k2 % 3)==0:
 				L.trim(k2-1)
 			toPropagate = propagated;
 
 		if (L.smallestNonEmpty() < K):
 			continue;
-		#print("  ")
-		#test
-		#display
-		#printResusabilities
-		#print(str(K)+": listLen "+str(len(L.theList[K]))+ " ocup"+str(L.ocupations[K]));
-
 
 		L.restartMulticore();
 		gc.collect();
-		#print([tuple([X,L.ocupations[X],len(L.theList[X]) ]) for X in np.nonzero(L.ocupations)[0].tolist()])
-		#print("-");
-
 
 		if (doTest):
 			tDense = bestThisK.getMatrix().toarray()
-			#print(str(tDense.T.shape)+" "+str(C.shape))
 			ErX = testBonC(tDense.T,CC.T  )
 			if True:
 				print(str(tDense.shape)),
 				print("E>:"+str( ErX)+ " ("+str(len(np.nonzero(tDense.sum(axis=0)==0)[0]))+"-"+str(len(np.nonzero(tDense.sum(axis=1)==0)[0]))+")"),
 
 		if (display):
-			print("K:"+str(K)+" "+str(len(forK))+" norm: "+str(best0Norm)+" ("+str(bestThisK.getMatrix().indices.shape[0])+") shape: "+str([bestThisK.m , bestThisK.k])+" "+str(datetime.datetime.now()))
+			#print("K:"+str(K)+" "+str(len(forK))+" norm: "+str(best0Norm)+" ("+str(bestThisK.getMatrix().indices.shape[0])+") shape: "+str([bestThisK.m , bestThisK.k])+" "+str(datetime.datetime.now()))
 			#Matrix save
 			matrixFileName = outputDataPath+outputDataPrefix+"_Matrix_"+str(bestThisK.k)+".decM";
 			bestThisK.sortIndicesWithinColumns();
-			#np.savez_compressed(matrixFileName,theBest[k][0].theMatrix);
 			bestThisK.saveToFile(matrixFileName);
-			#Score save
-			#outFile.write(str(bestThisK.k)+" \t "+ str(bestThisK.norm())+"\n")
-			#outFile.flush()
+
 
 		if (printReusabilities):
 			for bb in forK:
@@ -281,7 +283,9 @@ def heuristic1(Q,l,w,r,D,outputDataPathO,outputDataPrefixO,n,m,C,realData = 0,nu
 		outFile.flush()
 
 	L.multiCoreHelper.kill();
-
+	for kk in range(n,m+1):
+		if not(kk in L.bestDecomps.keys()):
+			L.bestDecomps[kk] = L.theList[kk][0].copy()
 	if (returnList):
 		return L.bestDecomps
 	else:
