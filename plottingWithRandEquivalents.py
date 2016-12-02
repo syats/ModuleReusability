@@ -13,6 +13,7 @@ import numpy as np
 from matplotlib.ticker import MaxNLocator
 import matplotlib
 from scipy.stats import binom
+import aux.auxPreprocessing as app
 
 
 #For each
@@ -43,7 +44,9 @@ def plotWithReasAsBaes(allData,typesOfData,Cs,namesOfData=[],namesOfTypes=['REAL
 	for fn in fileNames:
 		m = max(Cs[fn].shape)
 		n = min(Cs[fn].shape)
-		print(str(Cs[fn].shape)+" "+ namesOfData[fn])
+		translationOfRows,C2 = app.cleanInputMatrix(Cs[fn])
+		rr = min(C2.shape)
+		print("\n"+str(Cs[fn].shape)+" "+ namesOfData[fn])
 		s+=1;
 		dataForViolinThisFN = [[],[],[]]
 		placeYLabel = False
@@ -72,6 +75,7 @@ def plotWithReasAsBaes(allData,typesOfData,Cs,namesOfData=[],namesOfTypes=['REAL
 				continue
 
 		for dataNum in range(len(allData[fn])):
+			
 			data     = allData[fn][dataNum];
 			dataType = typesOfData[fn][dataNum];
 			if dataType == 0:
@@ -174,26 +178,43 @@ def makeViolinPlots(dataForViolinO,theAx,ytitle):
 		allData.append(dataRAND)
 		allData.append(dataRSS)
 
-	positions = [[0.7*i-0.02,0.7*i+0.02] for i in range(1,numFns+1)];
+	positions = [[0.7*i,0.7*i] for i in range(1,numFns+1)];
 	positions = [item for sublist in positions for item in sublist]
-	ax.plot([positions[0]-0.35,positions[-1]+0.35],[1,1],'r:',alpha=0.7,zorder=-1)
+	ax.plot([positions[0]-1.05,positions[-1]+0.35],[1,1],'r:',alpha=0.7,zorder=-1)
 
 
 	violin_parts = ax.violinplot(allData,showmeans=True,positions=positions,showextrema=False)
-
+	#print(str(violin_parts['cmeans'].get_segments()))
 	count = 0;
-	for pc in violin_parts['bodies']:
-		pc.set_alpha(0.75)
+	Osegs = violin_parts['cmeans'].get_segments();
+	segs=[]
+	for b in violin_parts['bodies']:
+		#b.set_alpha(0.75)
+		thisSeg = Osegs[count];
+		midPointX = thisSeg[0][0]+(thisSeg[1][0]-thisSeg[0][0])/2.0;
 		if count % 2 == 0:
-			pc.set_facecolor('blue')
-			pc.set_edgecolor('blue')
+		    m = np.mean(b.get_paths()[0].vertices[:, 0])
+		    b.get_paths()[0].vertices[:, 0] = np.clip(b.get_paths()[0].vertices[:, 0], -np.inf, m)
+		    b.set_color('b')
+		    b.set_facecolor('blue')
+		    newSeg = np.array([[thisSeg[0][0],thisSeg[0][1]]  ,  [ midPointX+0.01, thisSeg[1][1]]  ])
 		else:
-			pc.set_facecolor('green')
-			pc.set_edgecolor('green')
+		    m = np.mean(b.get_paths()[0].vertices[:, 0])
+		    b.get_paths()[0].vertices[:, 0] = np.clip(b.get_paths()[0].vertices[:, 0], m, np.inf)
+		    b.set_color('g')
+		    b.set_facecolor('green')
+		    newSeg = np.array([[midPointX-0.01,thisSeg[0][1]]  ,  [ thisSeg[1][0], thisSeg[1][1]] ])
 		count += 1;
+		segs.append(newSeg);
+		b.set_alpha(0.99)
 
 	violin_parts['cmeans'].set_color('black')
+	#print("seg:")
 
+	violin_parts['cmeans'].set_segments(segs)
+
+	#print(str(violin_parts['cmeans'].get_segments()))
+	#print("__\n")
 
 
 	ax.set_xticks([0.7*i for i in range(1,numFns+1)])
@@ -233,7 +254,7 @@ def makePlots(allData,typesOfData,Cs,namesOfData=[],namesOfTypes=['REAL','DP-Ran
 
 
 	portion = 2;
-	matplotlib.rcParams.update({'font.size': 16})
+	matplotlib.rcParams.update({'font.size': 15})
 
 	curveXLabel = "$k$, number of modules"
 	if logX:
@@ -496,7 +517,7 @@ def makePlots(allData,typesOfData,Cs,namesOfData=[],namesOfTypes=['REAL','DP-Ran
 
 
 # --------- B A N D S ---------
-def makeBands(allData,typesOfData,Cs,namesOfData=[],namesOfTypes=['REAL','DP-Rand','RSS-Rand','RSS2'],randToConsiderForSums=[1,2],markersOfTypes=['*','o','v','o'],colorsOfTypes=['r','b','g','k'],fig1FName='',fig2FName='',plotKvsData=True,plotDataSums=True,avgY=False,logX=False,logY=False,QCs=[],numStds = 2,theAx=None,yLabel=None,legendPos=0,finalK=None):
+def makeBands(allData,typesOfData,Cs,namesOfData=[],namesOfTypes=['REAL','DP-Rand','RSS-Rand','RSS2'],randToConsiderForSums=[1,2],markersOfTypes=['*','o','v','o'],colorsOfTypes=['r','b','g','k'],fig1FName='',fig2FName='',plotKvsData=True,plotDataSums=True,avgY=False,logX=False,logY=False,QCs=[],numStds = 2,theAx=None,yLabel=None,legendPos=0,finalK=None,lightColors=['#ff6666','#6666ff','#66ff66']):
 	fileNames = allData.keys();
 	totalMax = max([max([deco.max() for deco in fnl]) for fnl in allData.values()])
 	totalMin = min([min([deco.min() for deco in fnl]) for fnl in allData.values()])
@@ -633,15 +654,15 @@ def makeBands(allData,typesOfData,Cs,namesOfData=[],namesOfTypes=['REAL','DP-Ran
 
 				if not (dataType in placedLegends):
 					if (ii==0):
-						ladded=ax.plot(XX,YY1,colorsOfTypes[ii]+extraStyle,label=namesOfTypes[ii])
+						ladded=ax.plot(XX,YY1,colorsOfTypes[ii]+extraStyle,label=namesOfTypes[ii],markeredgewidth=0.0,zorder=100,fillstyle='full',linewidth=2)
 						print("yy1min"+str(min(YY1)));
 						placedLines.append(ladded[0]);
 					else:
 						#STDs
-						ax.fill_between(XX,YY1a,YY2a,facecolor=colorsOfTypes[ii],edgecolor=colorsOfTypes[ii],alpha=0.8,interpolate=False,label=namesOfTypes[ii])
+						ax.fill_between(XX,YY1a,YY2a,facecolor=colorsOfTypes[ii],edgecolor=colorsOfTypes[ii],zorder=20,interpolate=False,label=namesOfTypes[ii])
 						ladded=plt.Rectangle((0, 0), 1, 1, fc=colorsOfTypes[ii])
 						#MIN MAX
-						ax.fill_between(XX,YY1b,YY2b,facecolor=colorsOfTypes[ii],edgecolor=colorsOfTypes[ii],alpha=0.5,interpolate=False)
+						ax.fill_between(XX,YY1b,YY2b,facecolor=lightColors[ii],edgecolor=lightColors[ii],zorder=1,interpolate=False)
 						ladded=plt.Rectangle((0, 0), 1, 1, fc=colorsOfTypes[ii])
 						placedLines.append(ladded);
 						#mean

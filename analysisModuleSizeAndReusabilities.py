@@ -25,8 +25,9 @@ treatAs   = ['CSV','GEO','GEO']
 GEOthr    = 35
 CSVthr    = 1
 CSVsep	  = '\t'
+CSVreadStart = 6;
 #GEO treatment expects number of PCR cycles, GEOthr or more is considered AS NOT FOUND. This file format does not expect column or row titles
-#CSV treatment expects Integer copy numbers / read counts, CSVthr or more is considered AS FOUND. This file format expects both column and row titles. The row titles are the gene names, for example
+#CSV treatment expects Integer copy numbers / read counts, CSVthr or more is considered AS FOUND. This file format expects both column and row titles. The row titles are the gene names, for example, and are expected to be the first column of each row. The actual data is considered to be in columns CSVreadStart on wards (0-based)
 
 # ------ THE RANDOM EQUIVALENTS
 numRand = 2; 		 # Number of DP-Rand matrices to compare to
@@ -42,9 +43,9 @@ toSaveDirs = ['decompositions/',None,None]
 
 # -----------  WHAT TO COMPUTE WITH THE DATA  ----------------------------
 #First entry: size (0) or reusability (1)
-#Second entry   mean(1) maximum (2) or entropy (2)
-toPlot = [(0,0),(0,1),(1,2)]
-titles = ['Mean size \nAUC ratio ','Max size \nAUC ratio','entropy of reusability \nAUC ratio ']
+#Second entry   mean(0) maximum (2) or entropy (2)
+toPlot = [(0,0),(0,1),(1,2),(1,0)]
+titles = ['Mean size \nAUC ratio ','Max size \nAUC ratio','entropy of reusability \nAUC ratio ','Mean reusability \nAUC ratio']
 # ---------------------------------------
 
 
@@ -53,7 +54,7 @@ titles = ['Mean size \nAUC ratio ','Max size \nAUC ratio','entropy of reusabilit
 # L is the number of k decomp to save for the next iteration (only the best, the rest are discarded)
 # W + L is how many k's are the L*(D+Q) decompositions propagated greedily before discarding any of them
 
-heuristicParms={'Q':2 , 'L':4 , 'W': 2, 'R':-1 , 'D':6}  # (5X) Slower for rean analysis 
+heuristicParms={'Q':2 , 'L':4 , 'W': 2, 'R':-1 , 'D':6}  # (5X) Slower for real analysis
 heuristicParms={'Q':1 , 'L':1 , 'W': 1, 'R':-1 , 'D':2}  # Fast for testing
 nc = 4; 			 # Number of cores to run the heuristic algorithm on
 # ---------------------------------------
@@ -90,7 +91,7 @@ for fnNUM in range(len(fileNames)):
 		C,QC = aGEO.load_TaqMan_csv(fileName,thr=GEOthr);
 		gNames = "";
 	if treatAs[fnNUM]=='CSV':
-		C,QC,gNames = aGEO.load_Labeled_csv(fileName,thr=CSVthr,sep=CSVsep);
+		C,QC,gNames = aGEO.load_Labeled_csv(fileName,thr=CSVthr,sep=CSVsep,readStart=CSVreadStart);
 	hashC = hash(str(C.tolist()));
 	totHash = str(hashC)+"_"+str(C.shape[0])+"."+str(C.shape[1])+"_"+str(C.sum());
 

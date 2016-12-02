@@ -12,7 +12,7 @@ import numpy as np
 
 import csv
 
-def load_Labeled_csv(fileName,thr=1,sep='\t'):
+def load_Labeled_csv(fileName,thr=1,sep='\t',readStart=1):
 
 	proteinsFile = fileName
 	expre = dict();
@@ -22,7 +22,7 @@ def load_Labeled_csv(fileName,thr=1,sep='\t'):
 		for row in proteinsReader:
 			geneName = row[0];
 			belongings = [];
-			for col in row[1:len(row)-1:]:
+			for col in row[readStart:len(row)-1:]:
 				belongings.append(col)
 			expre[geneName] = np.array(belongings,dtype='int32');
 
