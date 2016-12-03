@@ -19,9 +19,14 @@ import aux.auxPreprocessing as app
 
 
 # -------- THE DATA --------------------------------
-filePath   = 'testData/';
-fileNames  = ['smallSample.csv','GPL13987/GSE33045fluid_.dat','GPL13987/GSE33045plasma_.dat']
-treatAs   = ['CSV','GEO','GEO']
+filePath   = 'BrawandData/';  #From Brawand et al. Nature 2011.   doi:10.1038/nature10532
+fileNames  = ['Human_Ensembl57_TopHat_UniqueReads.txt',
+				'Bonobo_Ensembl57_TopHat_UniqueReads.txt', 'Chicken_Ensembl57_TopHat_UniqueReads.txt']  #EG
+
+#fileNames  = ['Chimpanzee_Ensembl57_TopHat_UniqueReads.txt', 'Gorilla_Ensembl57_TopHat_UniqueReads.txt', 'Macaque_Ensembl57_TopHat_UniqueReads.txt', 'Mouse_Ensembl57_TopHat_UniqueReads.txt']  #Hell9000
+#fileNames  = [''Opossum_Ensembl57_TopHat_UniqueReads.txt', 'Orangutan_Ensembl57_TopHat_UniqueReads.txt', 'Platypus_Ensembl57_TopHat_UniqueReads.txt' ]  #lnsyc
+
+treatAs   = ['CSV' for x in fileNames]
 GEOthr    = 35
 CSVthr    = 1
 CSVsep	  = '\t'
@@ -35,8 +40,9 @@ numRSS3 = 2; 		 # Numbre of RSS-Rand to compare to
 
 storageDir = 'storage/';
 #The computations are saved here, not the decompositions themselves but only the data necesary for recomputing the plots. The filenames are a hash of the input matrix, and the files contain pickled objects of class decompositionWithSurrogates. If something changes and you want to rerun everything for a given input file, you must delete the corresponding file in the storageDir
-toSaveDirs = ['decompositions/',None,None]
-#One can also save the decompositions of the real data... beware it can take up lots of space
+
+toSaveDirs   = ['decompositions/' for x in fileNames]
+#One can also save the decompositions of the real data... beware it can take up lots of space, None means the decompositions aren't saved
 
 # ---------------------------------------
 
@@ -53,9 +59,10 @@ titles = ['Mean size \nAUC ratio ','Max size \nAUC ratio','entropy of reusabilit
 # D+Q is the total number of k+1 decomps to make for each k decomp so far computed, D are "random" (exploration)  decomps and D are greedy (explotation)
 # L is the number of k decomp to save for the next iteration (only the best, the rest are discarded)
 # W + L is how many k's are the L*(D+Q) decompositions propagated greedily before discarding any of them
+# R is the last k for which decomps are computed. If negative, all possible k's are computed
 
 heuristicParms={'Q':2 , 'L':4 , 'W': 2, 'R':-1 , 'D':6}  # (5X) Slower for real analysis
-heuristicParms={'Q':1 , 'L':1 , 'W': 1, 'R':-1 , 'D':2}  # Fast for testing
+heuristicParms={'Q':2 , 'L':2 , 'W': 1, 'R':-1 , 'D':1}  # Fast for testing
 nc = 4; 			 # Number of cores to run the heuristic algorithm on
 # ---------------------------------------
 
@@ -81,7 +88,7 @@ for fnNUM in range(len(fileNames)):
 	saveDir = toSaveDirs[fnNUM];
 	savePrefix = None;
 	if saveDir != None:
-		savePrefix = fn;
+		savePrefix = fn.split("_")[0];
 
 	print("\nFN:" + fn)
 	thisNumRand = numRand;
@@ -92,6 +99,7 @@ for fnNUM in range(len(fileNames)):
 		gNames = "";
 	if treatAs[fnNUM]=='CSV':
 		C,QC,gNames = aGEO.load_Labeled_csv(fileName,thr=CSVthr,sep=CSVsep,readStart=CSVreadStart);
+
 	hashC = hash(str(C.tolist()));
 	totHash = str(hashC)+"_"+str(C.shape[0])+"."+str(C.shape[1])+"_"+str(C.sum());
 

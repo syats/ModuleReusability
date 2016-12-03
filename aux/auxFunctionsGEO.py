@@ -22,20 +22,21 @@ def load_Labeled_csv(fileName,thr=1,sep='\t',readStart=1):
 		for row in proteinsReader:
 			geneName = row[0];
 			belongings = [];
-			for col in row[readStart:len(row)-1:]:
-				belongings.append(col)
-			expre[geneName] = np.array(belongings,dtype='int32');
+			for col in row[readStart:]:
+				belongings.append(float(col))
+			expre[geneName] = np.array(belongings);
 
 	print('READER:: '+str(len(expre.keys()))+' rows read')
 	m = len(expre.keys());
 	n = len(expre.values()[0]);
-	QC = np.zeros([m,n],dtype='int32')
+	QC = np.zeros([m,n])
 	C  = np.zeros([m,n],dtype='int8')
 	x = 0;
 	for g in expre.keys():
 		QC[x,:] = expre[g];
 		C[x,np.nonzero(expre[g]>=thr)[0]]=1;
 		x += 1;
+
 
 	return C,QC,expre.keys()
 

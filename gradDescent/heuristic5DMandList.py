@@ -35,6 +35,8 @@ def heuristic1(Q,l,w,r,D,outputDataPathO,outputDataPrefixO,n,m,C,realData = 0,nu
 
 	CDM = DM.decomposableMatrix(C,wVector = np.array(geneWeights));
 
+	if numCores==1:
+		print("single core")
 
 	m   =   CDM.m;  # number of genes
 	n   =   CDM.k;  # numbre of tissues

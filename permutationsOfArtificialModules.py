@@ -88,6 +88,7 @@ def decomposeMatrixAndGetSumOfVariances(Cz,returnListOfVars=False,nCores=1,heuri
 
 	# -- Prepare for decomposition
 	emptyGenes,detr,translationOfRows,Cs = app.cleanInputMatrix(C,alsoReturnTranslationToOriginal=True);
+	print("\t"+str(C.shape)+" -> "+str(Cs.shape))
 	nodeWeights = np.zeros(max(Cs.shape));
 	for x in range(m):
 		iind = translationOfRows[x];
