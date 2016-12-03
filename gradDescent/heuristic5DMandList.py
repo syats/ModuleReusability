@@ -80,7 +80,7 @@ def heuristic1(Q,l,w,r,D,outputDataPathO,outputDataPrefixO,n,m,C,realData = 0,nu
 
 		K = L.smallestNonEmpty()
 
-		print("\n"+str(K)+" "+str(L.theList[K][0].theMatrix.shape)),
+		#print("\n"+str(K)+" "+str(L.theList[K][0].theMatrix.shape)),
 
 		if (counter >= l) or len(L.theList[K]) == 0:
 			break;

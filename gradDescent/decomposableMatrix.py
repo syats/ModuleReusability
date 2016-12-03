@@ -792,7 +792,7 @@ class decomposableMatrix:
 			sup,R,S,D = self.findSuperflousEntries(C,S,D);
 
 		#print("totRemoved ="+str(totRemoved))
-		print("> "+str(numChanges)+"chgs "+str(totRemoved))
+		#print("> "+str(numChanges)+"chgs "+str(totRemoved))
 		if totRemoved == 0:
 			return None
 
