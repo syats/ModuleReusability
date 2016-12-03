@@ -762,7 +762,7 @@ class decomposableMatrix:
 		D2[np.nonzero(D)]=1;
 		#print("lensup "+str(len(sup[0]))+" Eo:"+str(np.abs(D2-C).sum()))
 		if len(sup[0])==0:
-			print("*"),
+			#print("*"),
 			return None;
 
 		BDensM = copy.deepcopy(self.theMatrix.todense());
