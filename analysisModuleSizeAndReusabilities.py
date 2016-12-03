@@ -20,10 +20,10 @@ import aux.auxPreprocessing as app
 
 # -------- THE DATA --------------------------------
 filePath   = 'BrawandData/';  #From Brawand et al. Nature 2011.   doi:10.1038/nature10532
-fileNames  = ['Human_Ensembl57_TopHat_UniqueReads.txt',
-				'Bonobo_Ensembl57_TopHat_UniqueReads.txt', 'Chicken_Ensembl57_TopHat_UniqueReads.txt']  #EG
+#fileNames  = ['Human_Ensembl57_TopHat_UniqueReads.txt',
+#				'Bonobo_Ensembl57_TopHat_UniqueReads.txt', 'Chicken_Ensembl57_TopHat_UniqueReads.txt']  #EG
 
-#fileNames  = ['Chimpanzee_Ensembl57_TopHat_UniqueReads.txt', 'Gorilla_Ensembl57_TopHat_UniqueReads.txt', 'Macaque_Ensembl57_TopHat_UniqueReads.txt', 'Mouse_Ensembl57_TopHat_UniqueReads.txt']  #Hell9000
+fileNames  = ['Chimpanzee_Ensembl57_TopHat_UniqueReads.txt', 'Gorilla_Ensembl57_TopHat_UniqueReads.txt', 'Macaque_Ensembl57_TopHat_UniqueReads.txt', 'Mouse_Ensembl57_TopHat_UniqueReads.txt']  #Hell9000
 #fileNames  = [''Opossum_Ensembl57_TopHat_UniqueReads.txt', 'Orangutan_Ensembl57_TopHat_UniqueReads.txt', 'Platypus_Ensembl57_TopHat_UniqueReads.txt' ]  #lnsyc
 
 treatAs   = ['CSV' for x in fileNames]
@@ -41,7 +41,7 @@ numRSS3 = 2; 		 # Numbre of RSS-Rand to compare to
 storageDir = 'storage/';
 #The computations are saved here, not the decompositions themselves but only the data necesary for recomputing the plots. The filenames are a hash of the input matrix, and the files contain pickled objects of class decompositionWithSurrogates. If something changes and you want to rerun everything for a given input file, you must delete the corresponding file in the storageDir
 
-toSaveDirs   = ['decompositions/' for x in fileNames]
+toSaveDirs   = [None for x in fileNames]
 #One can also save the decompositions of the real data... beware it can take up lots of space, None means the decompositions aren't saved
 
 # ---------------------------------------

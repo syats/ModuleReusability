@@ -59,7 +59,7 @@ class listOfDecompositions:
 		Bk = CDM.copy();
 
 		#print("startInit: "+str(Bk.theMatrix.shape))
-		for k in range(n+1,n+numGreedy+2):
+		for k in range(n+1,n+numGreedy+2*l):
 			Bk.alsoSmaller = True;
 			Bk.mergeOverlappingColumns();
 			#print(str(k)+" ->-> "+str(Bk.theMatrix.shape)+" toprop:"+str(len(toProp)));

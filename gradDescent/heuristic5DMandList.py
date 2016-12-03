@@ -75,11 +75,12 @@ def heuristic1(Q,l,w,r,D,outputDataPathO,outputDataPrefixO,n,m,C,realData = 0,nu
 	counter = 0;
 	counter2 = -10
 	latestK = -1;
+	dd = 0;
 	while (L.smallestNonEmpty() <= m) or (L.bestNorms[m] > m):
 
 		K = L.smallestNonEmpty()
 
-		#print(str(K)+" "+str(L.theList[K][0].theMatrix.shape))
+		print("\n"+str(K)+" "+str(L.theList[K][0].theMatrix.shape)),
 
 		if (counter >= l) or len(L.theList[K]) == 0:
 			break;
@@ -169,10 +170,12 @@ def heuristic1(Q,l,w,r,D,outputDataPathO,outputDataPrefixO,n,m,C,realData = 0,nu
 				missing = l*(Q+D) - len(toPropagate);
 				toPropagate.extend([ran.choice(L.theList[k2][:l]) for kc in range(missing+1)  ])
 
-			if (K>=n+l+1+numGreedy+dd):
+			if (K>=1+n+l+w+numGreedy+dd):
 				L.trim(k2-1);
-
-			ll = max(len(L.theList[k2])-l,l);
+				ll = l + (1+dd if ran.random() < 0.5 else dd);
+			else:
+				ll = max(len(L.theList[k2])-l,l);
+				
 			if ll < 2:
 				ll = 2;
 
@@ -182,7 +185,7 @@ def heuristic1(Q,l,w,r,D,outputDataPathO,outputDataPrefixO,n,m,C,realData = 0,nu
 			else:
 				L.theList[k2] = good
 			L.ocupations[k2] = len(L.theList[k2]);
-			propagated    = L.propagateOneStep(toPropagate,1,dd,len(toPropagate)+dd*l);
+			propagated    = L.propagateOneStep(toPropagate,1,dd,len(toPropagate)+dd);
 			if len(propagated)==0:
 				range3 = [];
 				range2 = [];

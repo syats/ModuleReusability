@@ -762,11 +762,15 @@ class decomposableMatrix:
 		D2[np.nonzero(D)]=1;
 		#print("lensup "+str(len(sup[0]))+" Eo:"+str(np.abs(D2-C).sum()))
 		if len(sup[0])==0:
+			print("*"),
 			return None;
 
 		BDensM = copy.deepcopy(self.theMatrix.todense());
 		Bdense = np.array(BDensM,dtype=np.float64)
+		numChanges = 0;
 		while(len(sup[0]) > 0):
+			numChanges += 1;
+
 			maxDelta = -1;
 			maxPair  = None;
 			for j in range(self.k):
@@ -788,6 +792,7 @@ class decomposableMatrix:
 			sup,R,S,D = self.findSuperflousEntries(C,S,D);
 
 		#print("totRemoved ="+str(totRemoved))
+		print("> "+str(numChanges)+"chgs "+str(totRemoved))
 		if totRemoved == 0:
 			return None
 
