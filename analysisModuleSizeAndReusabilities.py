@@ -62,7 +62,7 @@ titles = ['Mean size \nAUC ratio ','Max size \nAUC ratio','entropy of reusabilit
 # R is the last k for which decomps are computed. If negative, all possible k's are computed
 
 heuristicParms={'Q':2 , 'L':4 , 'W': 2, 'R':-1 , 'D':6}  # (5X) Slower for real analysis
-heuristicParms={'Q':2 , 'L':2 , 'W': 1, 'R':-1 , 'D':1}  # Fast for testing
+heuristicParms={'Q':1 , 'L':2 , 'W': 0, 'R':-1 , 'D':1}  # Fast for testing
 nc = 4; 			 # Number of cores to run the heuristic algorithm on
 # ---------------------------------------
 

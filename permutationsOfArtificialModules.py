@@ -114,6 +114,7 @@ def decomposeMatrixAndGetSumOfVariances(Cz,returnListOfVars=False,nCores=1,heuri
 
 	#extend matrix
 	#print("E")
+	'''
 	trans,Be = eRM.expandMatrix(Br);
 	Bk = Be.copy();
 
@@ -123,7 +124,8 @@ def decomposeMatrixAndGetSumOfVariances(Cz,returnListOfVars=False,nCores=1,heuri
 		MEASS = MD.sizeMeasures(Bk);
 		stds[Bk.k] = MEASS.std;
 		listOfsizeMeasures[Bk.k] = MEASS;
-
+	'''
+	
 	return listOfsizeMeasures,m,r
 
 # outputData has (1+2*repetitions)*len(colVals)*len(rowVals) rows and 4 cols
