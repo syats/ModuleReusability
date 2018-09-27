@@ -17,7 +17,7 @@ from scipy.stats import entropy
 from scipy.special import comb
 import bisect
 from scipy.stats import entropy
-from scipy.stats import histogram
+from numpy import histogram
 
 class sizeMeasures:
 

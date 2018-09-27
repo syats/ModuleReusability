@@ -27,6 +27,13 @@ fileNames  = ['Chimpanzee_Ensembl57_TopHat_UniqueReads.txt', 'Gorilla_Ensembl57_
 #fileNames  = [''Opossum_Ensembl57_TopHat_UniqueReads.txt', 'Orangutan_Ensembl57_TopHat_UniqueReads.txt', 'Platypus_Ensembl57_TopHat_UniqueReads.txt' ]  #lnsyc
 
 treatAs   = ['CSV' for x in fileNames]
+
+# For test data -->
+filePath = "testData/GPL13987/"
+fileNames =  ["GSE33045fluid_.dat", "GSE33045plasma_.dat"]
+treatAs = ['GEO' for x in fileNames]
+
+
 GEOthr    = 35
 CSVthr    = 1
 CSVsep	  = '\t'

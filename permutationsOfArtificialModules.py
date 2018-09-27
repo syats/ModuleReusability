@@ -91,7 +91,7 @@ def decomposeMatrixAndGetSumOfVariances(Cz,returnListOfVars=False,nCores=1,heuri
 	print("\t"+str(C.shape)+" -> "+str(Cs.shape))
 	nodeWeights = np.zeros(max(Cs.shape));
 	for x in range(m):
-		iind = translationOfRows[x];
+		iind = int(translationOfRows[x]);
 		if iind >= 0:
 			nodeWeights[iind] += 1;
 	r = max(Cs.shape);
