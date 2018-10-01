@@ -17,6 +17,7 @@ from scipy.stats import entropy
 import bisect
 import measuresForDecomposableMatrix as mfDM
 import copy
+import hashlib
 
 import utilsDecomposableMatrix as udm
 
@@ -76,6 +77,11 @@ class decomposableMatrix:
 	def getMatrix(self):
 		return self.theMatrix
 
+	def __hash__(self):
+		md5 = hashlib.md5()
+		md5.update(str(self.theHashes))
+		return int(md5.hexdigest(),16)
+
 	def copy(self):
 		newObject = decomposableMatrix()
 		newObject.theMatrix = self.theMatrix.copy();
@@ -94,7 +100,11 @@ class decomposableMatrix:
 
 	# --------------------------------------------------------------------------
 	# Determines if this matrix is equal to another.
-	# To make things more efficient, by default not the whole matrix is checked, only some random entries and hashes and the total hash. If you want a percise check then pass percise=True as argument
+	# To make things more efficient, by default not the whole matrix is checked, only s
+	#
+	#
+	#
+	# ome random entries and hashes and the total hash. If you want a percise check then pass percise=True as argument
 	def equals(self,dm2,percise=False):
 
 		if (percise):
@@ -403,6 +413,12 @@ class decomposableMatrix:
 
 	# --------------------------------------------------------------------------
 	def findQthOverlap(self,q):
+
+		#  ----------- ! DEGRADE OPTIMALITY ! -------------
+		if ran.random() < 0.8:
+			q = q+5
+		#  ----------- _______________________ -------------
+
 		coincidenceMatrix = self.theCoincidM;
 
 		possibleOverlaps = self.getListOfOverlaps();
@@ -417,6 +433,9 @@ class decomposableMatrix:
 		#		print(str(len(possibleOverlaps))+" q "+str(q))
 		if len(possibleOverlaps) == 0:
 			print("WTF!!")
+
+
+
 		qthOverlap = possibleOverlaps[-q];
 		if (qthOverlap == 0):
 			qthOverlap = possibleOverlaps[-1]
@@ -730,7 +749,7 @@ class decomposableMatrix:
 		return S,D
 
 	def findSuperflousEntries(self,C,SS=None,DD=None):
-		if (SS==None) or (DD==None):
+		if (SS is None) or (DD is None):
 			S,Do = self.createSandDforC(C);
 		else:
 			S = SS;

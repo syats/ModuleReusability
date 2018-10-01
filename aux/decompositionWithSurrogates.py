@@ -104,7 +104,6 @@ def flattenSizeReuseList(allData,origCs,sizeOrReuse,MeanMaxOrEnt):
 			if MeanMaxOrEnt == 2:
 				newDataSet = np.array([myH([x[sizeOrReuse] for x in dp]) if len(dp)>0 else np.nan   for dp in dataSet]);
 
-
 			nans = np.nonzero(np.isnan(newDataSet)==True)[0];
 			if len(nans)>0:
 				lasNonNan = nans[0]-1;
@@ -112,6 +111,8 @@ def flattenSizeReuseList(allData,origCs,sizeOrReuse,MeanMaxOrEnt):
 					smallestNan = lasNonNan
 			compactAllData[ke].append(newDataSet)
 
+		if smallestNan == np.inf:
+			smallestNan = -1
 		for dnum in range(len(compactAllData[ke])):
 			compactAllData[ke][dnum] = compactAllData[ke][dnum][:smallestNan];
 

@@ -233,7 +233,7 @@ class listOfDecompositions:
 	def removeRepeated(self,listOfMatricesO):
 		if len(listOfMatricesO)==0:
 			return [],[]
-		if listOfMatricesO[0].C == None:
+		if listOfMatricesO[0].C is None:
 			norms = np.array([pp.norm() for pp in listOfMatricesO])
 		else:
 			norms = np.array([1.0/pp.reusability(pp.C) for pp in listOfMatricesO])

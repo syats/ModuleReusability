@@ -22,7 +22,7 @@ from numpy import histogram
 class sizeMeasures:
 
 	def __init__(self,B,C=None,modSizes=[],Qpos=[0.05,0.95],numBins=-1):
-		if C==None:
+		if C is None:
 			rsizes = allModuleSizes(B)
 		else:
 			perModReuse,perModIntersect,Rsizes = perModuleReusability(B,C,alsoWeights=True)
@@ -39,10 +39,10 @@ class sizeMeasures:
 			numBins = int(realM/2);
 		if numBins < 0:
 			numBins = int(realM/float(2))
-		hist  = histogram(sizes,numbins=numBins,defaultlimits=(1,realM))[0]
+		hist  = histogram(sizes,bins=numBins,range=(1,realM))[0]
 		K = len(sizes)
 
-		if not (C==None):
+		if not (C is None):
 			sizeReuseParis = [(sizes[j],perModReuse[j]) for j in range(K)]
 			self.SRpairs    = sizeReuseParis;
 		else:
