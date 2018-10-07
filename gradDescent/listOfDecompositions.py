@@ -297,7 +297,7 @@ class listOfDecompositions:
 		sizes  = np.array([B.k for B in matrices]);
 		usizes = np.unique(sizes);
 
-
+		EMPT = []
 		for size in usizes:
 			thisSize    = [B for B in matrices if B.k == size]
 			minNormTS = min([B.norm() for B in thisSize]);
@@ -310,6 +310,8 @@ class listOfDecompositions:
 			self.theList[size] = allThisSize;
 			self.bestNorms[size]  = min([b.norm0() for b in allThisSize]);
 			self.ocupations[size] = len(self.theList[size]);
+
+		return EMPT
 
 
 	'''

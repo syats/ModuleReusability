@@ -126,7 +126,9 @@ def heuristic1(Q, l, w, r, D,
                     supTaken += 1;
                     if newBk.k == K:
                         oldBs.append(bkWSC)
-            L.addMatrices(newBs)
+            bad = L.addMatrices(newBs)
+            if return_all_decomps:
+                all_decomps = all_decomps | set(bad)
 
         toPropagate = L.theList[K];
         L.bestNorms[K] = L.theList[K][0].norm0();
@@ -151,7 +153,9 @@ def heuristic1(Q, l, w, r, D,
         propagated = L.propagateOneStep(toPropagate, Q, D, l * (Q + D))
         if return_all_decomps:
             all_decomps = all_decomps | set(propagated)
-        L.addMatrices(propagated)
+        bad = L.addMatrices(propagated)
+        if return_all_decomps:
+            all_decomps = all_decomps | set(bad)
 
         Ww = w;
         Ll = l
@@ -189,6 +193,7 @@ def heuristic1(Q, l, w, r, D,
                 ll = 2;
 
             [good, bad] = L.chooseLbest(L.theList[k2], ll);
+            all_decomps = all_decomps | set(bad)
             if any([B.k != k2 for B in good]):
                 L.addMatrices(good)
             else:
@@ -201,7 +206,9 @@ def heuristic1(Q, l, w, r, D,
                 range3 = [];
                 range2 = [];
                 break
-            L.addMatrices(propagated)
+            bad = L.addMatrices(propagated)
+            if return_all_decomps:
+                all_decomps = all_decomps | set(bad)
             if (len(L.theList[k2]) > 0):
                 L.bestNorms[k2] = L.theList[k2][0].norm0();
 
@@ -225,6 +232,7 @@ def heuristic1(Q, l, w, r, D,
                 ll = 2;
 
             [good, bad] = L.chooseLbest(L.theList[k2], ll);
+            all_decomps = all_decomps | set(bad)
             if any([B.k != k2 for B in good]):
                 # print("You are putting good in the wrong place" );
                 L.addMatrices(good)
