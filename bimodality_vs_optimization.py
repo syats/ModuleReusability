@@ -11,65 +11,46 @@ Distributed under GPL V3.0
 	Takes as input a list of decomposableMatrix objects. Each of them represents a decomposition into K modules
 """
 
-
-def histogram_of_module_sizes(decompositions_for_single_k, n=None, r=None):
-    k = decompositions_for_single_k[0].theMatrix.shape[1]
-    for i, dec in enumerate(decompositions_for_single_k):
-        if dec.theMatrix.shape[1] != k:
-            print("decomposition " + str(i) + " has the wrong number of modules")
-            raise ValueError
-
-
 import numpy as np
 import pickle
 import gradDescent.heuristic5DMandList as h1
 import aux.auxFunctionsGEO as aGEO
-import permutationsOfArtificialModules as pam
-import matplotlib.pyplot as plt
-import plottingWithRandEquivalents as  pt
-import aux.decompositionWithSurrogates as dws
-from gradDescent.measuresForDecomposableMatrix import sizeMeasures, perModuleReusability
 import aux.auxPreprocessing as app
 import os
 import math
 import matplotlib.pyplot as plt
 import aux.aux_stats as aast
-
-# -------- THE DATA --------------------------------
-filePath = 'BrawandData/';  # From Brawand et al. Nature 2011.   doi:10.1038/nature10532
-# fileNames  = ['Human_Ensembl57_TopHat_UniqueReads.txt',
-#				'Bonobo_Ensembl57_TopHat_UniqueReads.txt', 'Chicken_Ensembl57_TopHat_UniqueReads.txt']  #EG
-
-fileNames = ['Chimpanzee_Ensembl57_TopHat_UniqueReads.txt', 'Gorilla_Ensembl57_TopHat_UniqueReads.txt',
-             'Macaque_Ensembl57_TopHat_UniqueReads.txt', 'Mouse_Ensembl57_TopHat_UniqueReads.txt']  # Hell9000
-# fileNames  = [''Opossum_Ensembl57_TopHat_UniqueReads.txt', 'Orangutan_Ensembl57_TopHat_UniqueReads.txt', 'Platypus_Ensembl57_TopHat_UniqueReads.txt' ]  #lnsyc
-
-treatAs = ['CSV' for x in fileNames]
+from gradDescent.measuresForDecomposableMatrix import sizeMeasures, perModuleReusability
+import plot_functions as pf
 
 # For test data -->
 filePath = "/home/syats/Modularity/data_sets/GPL13987"
-fileNames = ['GSE48909_non-normalized_data_RPMI8226.csv',
+fileNames = ['GSE48908_non-normalized_data_KMS11.csv',
+             'GSE37766_non_normalized_cardA.csv',
+             'GSE45387_SUDHL4_non-normalized.csv',
+             'GSE48909_non-normalized_data_RPMI8226.csv',
              "GSE47652_non_normalized.csv"]
 treatAs = ['GEO' for x in fileNames]
 
+fnn = 4  # <--- From the list of fileNames, which to take
 plotHeatmaps = False
 plotEntropies = True
 plotDeltaMus = True
 binwidth_for_sizes = 5
 numbins_for_reuses = 15
+numbins_for_entropies = 15
 compute = False
-append = False
+append = True
+k_step_size = 4
+plot_each_k = False
 
+# ---------------------------------------------------------------
 GEOthr = 35
 CSVthr = 1
 CSVsep = '\t'
 CSVreadStart = 6;
 # GEO treatment expects number of PCR cycles, GEOthr or more is considered AS NOT FOUND. This file format does not expect column or row titles
 # CSV treatment expects Integer copy numbers / read counts, CSVthr or more is considered AS FOUND. This file format expects both column and row titles. The row titles are the gene names, for example, and are expected to be the first column of each row. The actual data is considered to be in columns CSVreadStart on wards (0-based)
-
-# ------ THE RANDOM EQUIVALENTS
-numRand = 2;  # Number of DP-Rand matrices to compare to
-numRSS3 = 2;  # Numbre of RSS-Rand to compare to
 
 storageDir = 'storage/';
 # The computations are saved here, not the decompositions themselves but only the data necesary for recomputing the plots. The filenames are a hash of the input matrix, and the files contain pickled objects of class decompositionWithSurrogates. If something changes and you want to rerun everything for a given input file, you must delete the corresponding file in the storageDir
@@ -85,15 +66,15 @@ toSaveDirs = [None for x in fileNames]
 # W + L is how many k's are the L*(D+Q) decompositions propagated greedily before discarding any of them
 # R is the last k for which decomps are computed. If negative, all possible k's are computed
 
-heuristicParms = {'Q': 1, 'l': 2, 'w': 0, 'r': -1, 'D': 5}  # Fast for testing
-computing_heuristicParms = {'Q': 2, 'l': 8, 'w': 2, 'r': -1, 'D': 10}  # (5X) Slower for real analysis
+heuristicParms = {'Q': 1, 'l': 2, 'w': 1, 'r': -1, 'D': 3}
+computing_heuristicParms = {'Q': 2, 'l': 18, 'w': 2, 'r': -1, 'D': 13}
 nc = 4  # Number of cores to run the heuristic algorithm on
 # ---------------------------------------
 
 
 # Make the decompositions both of the real data and of its random equivalents.
 # for fnNUM,fn in enumerate(fileNames):
-fnNUM, fn = 0, fileNames[0]
+fnNUM, fn = 0, fileNames[fnn]
 
 print("\nFN:" + fn)
 
@@ -128,6 +109,7 @@ if (append or (not compute)) and (len(pre_computed) == 0):
     print("loading.... ")
     try:
         pre_computed = pickle.load(open(os.path.join(storageDir, fn + "decompos.pkl"), "rb"))
+        pre_computed = set(pre_computed)
     except:
         print("File not found")
         compute = True
@@ -157,111 +139,143 @@ if compute or append:
 all_dec = all_dec | pre_computed
 print("Number of decos:  " + str(len(all_dec)))
 
-# for k in range(n,r):
-for k in [1+n + nr * 5 for nr in range(100) if 1 + n + nr * 5 < 0.8* r] + [int(r / 2) + 1]:
+# ---------- PREPARE DATA FOR PLOTTING ----------
+allks = [1 + n + nr * k_step_size
+         for nr in range(100)
+         if 1 + n + nr * k_step_size < r]
+allks = [n + 1 + i for i in range(20)]
+allks = [20,25,30,35,45]
+
+all_reuses_and_size_entropies = dict()
+all_reuses_and_delta_mus = dict()
+all_heatmap_data_size_reuse = dict()
+all_heatmap_data_entr_reuse = dict()
+all_reuse_bins = dict()
+all_entr_bins = dict()
+all_reuse_hists = dict()
+min_sizes = dict()
+
+for k in allks:
     # for each found value of resusability, data_for_heatmap will be a dictionary of type:
     #   module_size:  fraction_of_modules
     # e.g. to see what is the  fraction of modules of size s in a decompositoin with
     # reusability r,  consult   data_for_heatmap[r][s]
     # end num_per_reuse will count how many decompositions have this value of reusability
 
-    counts_for_heatmap = dict()
+    counts_for_heatmap_size_reuse = dict()
+    counts_for_heatmap_entr_reuse = dict()
     num_per_reuse = dict()
     decos_this_k = [x for x in all_dec if x.theMatrix.shape[1] == k]
     reuses_and_size_entropies = []
     reuses_and_delta_mus = []
+    reuses_all_decos = np.zeros(len(decos_this_k))
 
 
     for decn, deco in enumerate(decos_this_k):
         sizes = deco.theSizes
         reuse = perModuleReusability(deco, Cs)[0].mean()
-        sizes_hist = np.histogram(sizes, [binwidth_for_sizes * i for i in range(r) if binwidth_for_sizes * 1 <= m])[0]
+        reuses_all_decos[decn] = reuse
+        sizes_hist = np.histogram(sizes,
+                                  [binwidth_for_sizes * i
+                                   for i in range(m)
+                                   if binwidth_for_sizes * i <= m])[0]
         sizes_hist = [x / float(k) for x in sizes_hist]
-        H = -sum([x * (math.log(x) if x > 0 else 0) for x in sizes_hist])
+        # Shannon's Entropy in Bits
+        H = -sum([x * (math.log(x) / math.log(2) if x > 0 else 0) for x in sizes_hist])
         reuses_and_size_entropies.append((reuse, H))
 
         num_per_reuse[reuse] = num_per_reuse.get(reuse, 0) + 1
-        if not reuse in counts_for_heatmap.keys():
-            counts_for_heatmap[reuse] = {s: [] for s in range(1, m + 1)}
+        if not reuse in counts_for_heatmap_size_reuse.keys():
+            counts_for_heatmap_size_reuse[reuse] = {s: [] for s in range(1, m + 1)}
+            counts_for_heatmap_entr_reuse[reuse] = {}
         for size in set(sizes):
             frac_this_size = len([s for s in sizes if s == size]) / float(k)
             if frac_this_size == 0:
                 continue
-            counts_for_heatmap[reuse][size] = counts_for_heatmap[reuse].get(size, []) + [frac_this_size]
+            counts_for_heatmap_size_reuse[reuse][size] = counts_for_heatmap_size_reuse[reuse].get(size, []) + [
+                frac_this_size]
+        counts_for_heatmap_entr_reuse[reuse][H] = counts_for_heatmap_entr_reuse[reuse].get(H, 0) + 1
 
-        u = ( np.array(sizes) - min(sizes) ) / float(m)
-        mu1,mu2 = aast.find_two_maxima(u, ax=0)
+        u = (np.array(sizes) - min(sizes)) / float(m)
+        mu1, mu2 = aast.find_two_maxima(u, ax=0)
         mu1 = mu1 * m + min(sizes)
         mu2 = mu2 * m + min(sizes)
-        reuses_and_delta_mus.append((reuse, np.abs(mu1- mu2)))
-
-
-
+        reuses_and_delta_mus.append((reuse, np.abs(mu1 - mu2)))
 
     # At the end we divide by num_per_reuse so that  data_for_heatmap[r][s] is the average
     # fraction of blocks of size s in decompositions of reusability r
 
-    if len(counts_for_heatmap) == 0:
+    if len(counts_for_heatmap_size_reuse) == 0:
         continue
-    reuses = list(counts_for_heatmap.keys())
-    reuse_bins = np.linspace(min(reuses), max(reuses), numbins_for_reuses)
+    reuses_this_k = list(counts_for_heatmap_size_reuse.keys())
+    reuse_bins = np.linspace(min(reuses_this_k), max(reuses_this_k), numbins_for_reuses)
+    reuse_hist = np.histogram(reuses_all_decos,reuse_bins)[0]
+    entropies_this_k = [x[1] for x in reuses_and_size_entropies]
+    entr_bins = np.linspace(min(entropies_this_k), max(entropies_this_k), numbins_for_entropies)
 
     means_for_heatmap = dict()
     stds_for_heatmap = dict()
-    sums_for_heatmap = dict()
+    sums_for_heatmap_size_reuse = dict()
+    heatmap_data_entr_reuse = np.zeros((numbins_for_reuses, numbins_for_entropies))
 
     totmax_size = -np.inf
     totmin_size = np.inf
-    for reuse in reuses:
+
+    # Discretize the reuses into  reusebins ---
+    # and the entropies into entrbins
+    for reuse in reuses_this_k:
         rn = max([0, reuse_bins.searchsorted([reuse])[0] - 1])
         if rn not in means_for_heatmap.keys():
             means_for_heatmap[rn] = dict()
             stds_for_heatmap[rn] = dict()
-            sums_for_heatmap[rn] = dict()
-        for size in counts_for_heatmap[reuse].keys():
-            if len(counts_for_heatmap[reuse][size]) > 0:
+            sums_for_heatmap_size_reuse[rn] = dict()
+        for size in counts_for_heatmap_size_reuse[reuse].keys():
+            if len(counts_for_heatmap_size_reuse[reuse][size]) > 0:
                 if size > totmax_size:
                     totmax_size = size
                 if size < totmin_size:
                     totmin_size = size
-                means_for_heatmap[rn][size] = np.mean(counts_for_heatmap[reuse][size])
-                stds_for_heatmap[rn][size] = np.std(counts_for_heatmap[reuse][size])
-                sums_for_heatmap[rn][size] = k * np.sum(counts_for_heatmap[reuse][size])
+                means_for_heatmap[rn][size] = np.mean(counts_for_heatmap_size_reuse[reuse][size])
+                stds_for_heatmap[rn][size] = np.std(counts_for_heatmap_size_reuse[reuse][size])
+                sums_for_heatmap_size_reuse[rn][size] = k * np.sum(counts_for_heatmap_size_reuse[reuse][size])
+        for h in counts_for_heatmap_entr_reuse[reuse].keys():
+            hn = max([0, entr_bins.searchsorted([h])[0] - 1])
+            heatmap_data_entr_reuse[rn][hn] += counts_for_heatmap_entr_reuse[reuse][h]
 
-    reuses.sort()
-    numreuses = len(reuses)
+    reuses_this_k.sort()
+    numreuses = len(reuses_this_k)
     numsizes = len(range(totmin_size, totmax_size + 1))
-    heatmap_data = np.zeros((numbins_for_reuses, numsizes))
+    heatmap_data_size_reuse = np.zeros((numbins_for_reuses, numsizes))
 
+    # After entering all the counts, we normalize row-wise the matrices for the heatmaps
     for rn in range(numbins_for_reuses):
-        if not rn in sums_for_heatmap.keys():
+        if not rn in sums_for_heatmap_size_reuse.keys():
             continue
-        tot_this_row = sum(sums_for_heatmap[rn].values())
-        for size in sums_for_heatmap[rn].keys():
-            heatmap_data[rn, size - totmin_size] = sums_for_heatmap[rn][size] / tot_this_row
+        tot_this_row = sum(sums_for_heatmap_size_reuse[rn].values())
+        for size in sums_for_heatmap_size_reuse[rn].keys():
+            heatmap_data_size_reuse[rn, size - totmin_size] = sums_for_heatmap_size_reuse[rn][size] / tot_this_row
+        sum_this_entr = heatmap_data_entr_reuse[rn,:].sum()
+        heatmap_data_entr_reuse[rn,:] = heatmap_data_entr_reuse[rn,:] / sum_this_entr
 
-    if plotDeltaMus:
-        for fig_n in [0, k]:
-            plt.figure("Delta" + str(fig_n))
-            all_reuses = [x[0] for x in reuses_and_delta_mus]
-            all_deltas = [x[1] for x in reuses_and_delta_mus]
-            plt.plot(all_reuses, all_deltas, '.')
-            plt.xlabel("Mean Decomposition Reusability")
-            plt.ylabel("Distance between size distribution maxima")
-    if plotHeatmaps:
-        plt.figure("H"+str(k))
-        plt.imshow(heatmap_data, cmap='hot', interpolation='none', aspect='auto')
-        plt.yticks(list(range(len(reuse_bins))), ["%.2f" % a for a in reuse_bins])
-        plt.ylabel("Mean decomposition reusability ")
-        plt.xlabel("PBB size ")
-        plt.colorbar()
-    if plotEntropies:
-        for fig_n in [0, k]:
-            plt.figure("Entr" + str(fig_n))
-            all_reuses = [x[0] for x in reuses_and_size_entropies]
-            all_entropies = [x[1] for x in reuses_and_size_entropies]
-            plt.plot(all_reuses, all_entropies, '.')
-            plt.xlabel("Mean Decomposition Reusability")
-            plt.ylabel("Entropy of the distribution of PBB sizes")
+    min_sizes[k] = totmin_size
+    all_heatmap_data_size_reuse[k] = heatmap_data_size_reuse
+    all_heatmap_data_entr_reuse[k] = heatmap_data_entr_reuse
+    all_reuses_and_delta_mus[k] = reuses_and_delta_mus
+    all_reuses_and_size_entropies[k] = reuses_and_size_entropies
+    all_reuse_bins[k] = reuse_bins
+    all_reuse_hists[k] = reuse_hist
+    all_entr_bins[k] = entr_bins
+
+# ----- Do the plotting ----------------------
+
+
+if plotHeatmaps:
+    pf.heatmap_reuse_vs_size(all_heatmap_data_size_reuse, all_reuse_bins, min_sizes,
+                             all_heatmap_data_entr_reuse, all_entr_bins, all_reuse_hists,
+                             size_compress_factor=3)
+if plotEntropies:
+    pf.scatter_reuse_vs_entropiesSizes(all_reuses_and_size_entropies, plot_each=plot_each_k)
+if plotDeltaMus:
+    pf.scatter_reuse_vs_muDistance(all_reuses_and_delta_mus, plot_each=plot_each_k)
 
 plt.show()
