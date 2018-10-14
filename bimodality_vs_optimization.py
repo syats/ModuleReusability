@@ -34,8 +34,9 @@ treatAs = ['GEO' for x in fileNames]
 
 fnn = 4  # <--- From the list of fileNames, which to take
 plotHeatmaps = False
-plotEntropies = True
-plotDeltaMus = True
+plotEntropies = False
+plotDeltaMus = False
+plotTriptych = True
 binwidth_for_sizes = 5
 numbins_for_reuses = 15
 numbins_for_entropies = 15
@@ -43,6 +44,10 @@ compute = False
 append = True
 k_step_size = 4
 plot_each_k = False
+division_pos = 120
+
+maximum_r = 30
+num_reruns = 1
 
 # ---------------------------------------------------------------
 GEOthr = 35
@@ -67,7 +72,7 @@ toSaveDirs = [None for x in fileNames]
 # R is the last k for which decomps are computed. If negative, all possible k's are computed
 
 heuristicParms = {'Q': 1, 'l': 2, 'w': 1, 'r': -1, 'D': 3}
-computing_heuristicParms = {'Q': 2, 'l': 18, 'w': 2, 'r': -1, 'D': 13}
+computing_heuristicParms = {'Q': 4, 'l': 10, 'w': 2, 'r': maximum_r, 'D': 20}
 nc = 4  # Number of cores to run the heuristic algorithm on
 # ---------------------------------------
 
@@ -114,12 +119,19 @@ if (append or (not compute)) and (len(pre_computed) == 0):
         print("File not found")
         compute = True
     print("loaded:  " + str(len(pre_computed)) + " decos")
+    pre_computed = list(pre_computed)
+    for dec in pre_computed:
+        dec.orderColumns()
+    pre_computed = set(pre_computed)
+    print("loaded:  " + str(len(pre_computed)) + " decos after re-sorting")
 
 if compute:
     heuristicParms = computing_heuristicParms
 if compute or append:
     print("computing....")
-    all_dec = h1.heuristic1(C=Cs.T,
+    for rerun in range(num_reruns):
+        print("\t"+str(rerun+1)+ "/" + str(num_reruns))
+        all_dec = all_dec | h1.heuristic1(C=Cs.T,
                             n=n, m=m,
                             outputDataPathO=saveDir,
                             outputDataPrefixO=savePrefix,
@@ -132,19 +144,26 @@ if compute or append:
                             **heuristicParms)
 
     print("computed " + str(len(all_dec)) + ". Now saving....")
-    all_dec = set(all_dec | pre_computed)
+    all_dec = list(all_dec | pre_computed)
+    for dec in all_dec:
+        dec.orderColumns()
+    all_dec = set(all_dec)
     pickle.dump(all_dec, open(os.path.join(storageDir, fn + "decompos.pkl"), "wb"))
     print("Finished computing & saving.")
 
 all_dec = all_dec | pre_computed
+
 print("Number of decos:  " + str(len(all_dec)))
 
-# ---------- PREPARE DATA FOR PLOTTING ----------
+
+
+# ---------- PREPARE DATA FOR PLOTTING ------------------
 allks = [1 + n + nr * k_step_size
          for nr in range(100)
          if 1 + n + nr * k_step_size < r]
 allks = [n + 1 + i for i in range(20)]
-allks = [20,25,30,35,45]
+allks = [20,26,31,36,46,51]
+allks = range(23,37)
 
 all_reuses_and_size_entropies = dict()
 all_reuses_and_delta_mus = dict()
@@ -154,6 +173,8 @@ all_reuse_bins = dict()
 all_entr_bins = dict()
 all_reuse_hists = dict()
 min_sizes = dict()
+all_large_reuse_hists = dict()
+all_small_reuse_hists = dict()
 
 for k in allks:
     # for each found value of resusability, data_for_heatmap will be a dictionary of type:
@@ -169,11 +190,15 @@ for k in allks:
     reuses_and_size_entropies = []
     reuses_and_delta_mus = []
     reuses_all_decos = np.zeros(len(decos_this_k))
-
+    reuses_large_modules = dict()
+    reuses_small_modules = dict()
+    reuses_large_binned = dict()
+    reuses_small_binned = dict()
 
     for decn, deco in enumerate(decos_this_k):
         sizes = deco.theSizes
-        reuse = perModuleReusability(deco, Cs)[0].mean()
+        per_module_reuse = perModuleReusability(deco, Cs)[0]
+        reuse = per_module_reuse.mean()
         reuses_all_decos[decn] = reuse
         sizes_hist = np.histogram(sizes,
                                   [binwidth_for_sizes * i
@@ -188,6 +213,8 @@ for k in allks:
         if not reuse in counts_for_heatmap_size_reuse.keys():
             counts_for_heatmap_size_reuse[reuse] = {s: [] for s in range(1, m + 1)}
             counts_for_heatmap_entr_reuse[reuse] = {}
+            reuses_large_modules[reuse] = np.zeros(n + 1)
+            reuses_small_modules[reuse] = np.zeros(n + 1)
         for size in set(sizes):
             frac_this_size = len([s for s in sizes if s == size]) / float(k)
             if frac_this_size == 0:
@@ -202,12 +229,23 @@ for k in allks:
         mu2 = mu2 * m + min(sizes)
         reuses_and_delta_mus.append((reuse, np.abs(mu1 - mu2)))
 
+        reuse_large_modules = [per_module_reuse[i] for i in range(len(sizes))
+                               if sizes[i] >= division_pos]
+        reuse_small_modules = [per_module_reuse[i] for i in range(len(sizes))
+                               if sizes[i] < division_pos]
+
+        for i in range(n+1):
+            reuses_large_modules[reuse][i] += len([x for x in reuse_large_modules if x == i])
+            reuses_small_modules[reuse][i] += len([x for x in reuse_small_modules if x == i])
+
+
     # At the end we divide by num_per_reuse so that  data_for_heatmap[r][s] is the average
     # fraction of blocks of size s in decompositions of reusability r
 
     if len(counts_for_heatmap_size_reuse) == 0:
         continue
     reuses_this_k = list(counts_for_heatmap_size_reuse.keys())
+    re = np.linspace(min(reuses_this_k), max(reuses_this_k), numbins_for_reuses)
     reuse_bins = np.linspace(min(reuses_this_k), max(reuses_this_k), numbins_for_reuses)
     reuse_hist = np.histogram(reuses_all_decos,reuse_bins)[0]
     entropies_this_k = [x[1] for x in reuses_and_size_entropies]
@@ -229,6 +267,8 @@ for k in allks:
             means_for_heatmap[rn] = dict()
             stds_for_heatmap[rn] = dict()
             sums_for_heatmap_size_reuse[rn] = dict()
+            reuses_large_binned[rn] = np.zeros(n + 1)
+            reuses_small_binned[rn]= np.zeros(n + 1)
         for size in counts_for_heatmap_size_reuse[reuse].keys():
             if len(counts_for_heatmap_size_reuse[reuse][size]) > 0:
                 if size > totmax_size:
@@ -241,6 +281,8 @@ for k in allks:
         for h in counts_for_heatmap_entr_reuse[reuse].keys():
             hn = max([0, entr_bins.searchsorted([h])[0] - 1])
             heatmap_data_entr_reuse[rn][hn] += counts_for_heatmap_entr_reuse[reuse][h]
+        reuses_large_binned[rn] += reuses_large_modules[reuse]
+        reuses_small_binned[rn] += reuses_small_modules[reuse]
 
     reuses_this_k.sort()
     numreuses = len(reuses_this_k)
@@ -265,9 +307,13 @@ for k in allks:
     all_reuse_bins[k] = reuse_bins
     all_reuse_hists[k] = reuse_hist
     all_entr_bins[k] = entr_bins
+    all_small_reuse_hists[k] = reuses_small_binned
+    all_large_reuse_hists[k] = reuses_large_binned
 
 # ----- Do the plotting ----------------------
-
+if plotTriptych:
+    pf.heatmap_triptych(all_heatmap_data_size_reuse, all_reuse_bins, min_sizes, all_reuse_hists,
+                        all_large_reuse_hists, all_small_reuse_hists)
 
 if plotHeatmaps:
     pf.heatmap_reuse_vs_size(all_heatmap_data_size_reuse, all_reuse_bins, min_sizes,

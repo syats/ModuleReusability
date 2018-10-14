@@ -60,7 +60,7 @@ class decomposableMatrix:
 
 		# Order the columns by hash
 		perm = self.orderColumns()
-		self.totalHash  = hash(str(self.theHashes));
+		self.totalHash  = self.hash_f(str(self.theHashes));
 
 		# If it's not given, compute the weight vector
 		self.weightVector = wVector;
@@ -79,8 +79,13 @@ class decomposableMatrix:
 
 	def __hash__(self):
 		md5 = hashlib.md5()
-		md5.update(str(self.theHashes))
-		return int(md5.hexdigest(),16)
+		md5.update(",".join([str(x) for x in self.theHashes]))
+		return int(md5.hexdigest(), 16)
+
+	def hash_f(self, x):
+		md5 = hashlib.md5()
+		md5.update(x)
+		return int(md5.hexdigest(), 16)
 
 	def copy(self):
 		newObject = decomposableMatrix()
@@ -195,7 +200,7 @@ class decomposableMatrix:
 		symDiff.sort();
 
 		symDiff.flags.writeable = False;
-		hashSymDiff = hash(symDiff.data);
+		hashSymDiff = self.hash_f(symDiff.data);
 
 		return symDiff,hashSymDiff;
 
@@ -313,11 +318,11 @@ class decomposableMatrix:
 		spi = sp.getrow(0).indices;
 		spi.sort();
 		spi.flags.writeable = False;
-		newRHash = hash(spi.data);
+		newRHash = self.hash_f(spi.data);
 		place    = bisect.bisect(self.theHashes,newRHash);
 
 		self.theHashes = self.theHashes[:place] + [newRHash] + self.theHashes[place:];
-		self.totalHash  = hash(str(self.theHashes));
+		self.totalHash  = self.hash_f(str(self.theHashes));
 		self.theSizes = self.theSizes[:place] + [ sizeNewCol ] + self.theSizes[place:];
 
 		self.theMatrix = udm.insertColumnIntoCSCMatrix(self.theMatrix,newColD,place);
@@ -384,7 +389,7 @@ class decomposableMatrix:
 		#self.theMatrix = self.theMatrix[:,allCols];
 		self.theMatrix = udm.getColSliceMissingCol(self.theMatrix,j)
 		self.theHashes = [self.theHashes[jp] for jp in allCols  ]
-		self.totalHash  = hash(str(self.theHashes));
+		self.totalHash  = self.hash_f(str(self.theHashes));
 		self.theSizes  = [self.theSizes[jp]  for jp in allCols  ]
 
 
@@ -650,7 +655,7 @@ class decomposableMatrix:
 		for co in cols:
 			co.sort();
 			co.flags.writeable = False;
-		hashes = [hash(co.data) for co in cols];
+		hashes = [self.hash_f(co.data) for co in cols];
 		hashO  = udm.argSort(hashes);
 
 		#self.theMatrix.indices = self.theMatrix.indices[hashO];
@@ -672,10 +677,11 @@ class decomposableMatrix:
 			startNextColumnIndex = startNextColumnIndex+numElems;
 			self.theHashes[J] = hashes[j];
 
-		self.totalHash  = hash(str(self.theHashes));
+		self.totalHash  = self.hash_f(",".join([str(x) for x in self.theHashes]))
 		self.theMatrix.data    = newData;
 		self.theMatrix.indices = newIndices;
 		self.theMatrix.indptr  = newIndptr;
+		self.theSizes = self.computeSizes()
 
 		return hashO
 
